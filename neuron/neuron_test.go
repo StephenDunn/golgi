@@ -7,7 +7,7 @@ import (
 
 func TestSetupNeurons_ShouldAssignDownstreamToAllNeurons(t *testing.T) {
 	neurons := NewNeurons(1000, 10)
-	SetUpNetwork(&neurons)
+	SetUpNetwork(neurons)
 
 	for i, neu := range neurons {
 		if len(neu.downstreamNeurons) == 0 {
