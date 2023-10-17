@@ -7,27 +7,33 @@ import (
 )
 
 type Neuron struct {
-	id                uuid.UUID
-	threshold         int
-	HasFired          bool
-	downstreamNeurons []*Neuron
+	id        uuid.UUID
+	threshold int
+	HasFired  bool
+	axons     []axon
 }
 
-func NewNeuron(threshold int) *Neuron {
+type axon struct {
+	neuron   *Neuron
+	strength int
+}
+
+func NewNeuron(thresholdMin int, thresholdMax int) *Neuron {
+	threshold := rand.Intn(thresholdMax-thresholdMin) + thresholdMin
 	neu := Neuron{threshold: threshold, id: uuid.New()}
 	return &neu
 }
 
-func NewNeurons(amount int, threshold int) []*Neuron {
+func NewNeurons(amount int, thresholdMin int, thresholdMax int) []*Neuron {
 	var neurons []*Neuron
 	for i := 0; i < amount; i++ {
-		neurons = append(neurons, NewNeuron(threshold))
+		neurons = append(neurons, NewNeuron(thresholdMin, thresholdMax))
 	}
 
 	return neurons
 }
 
-func SetUpNetwork(neurons []*Neuron) {
+func SetUpNetwork(neurons []*Neuron, strengthMin int, strengthMax int) {
 	for _, neu := range neurons {
 		set := make(map[int]bool)
 		var result []int
@@ -40,7 +46,8 @@ func SetUpNetwork(neurons []*Neuron) {
 		}
 
 		for _, ix := range result {
-			neu.downstreamNeurons = append(neu.downstreamNeurons, neurons[ix])
+			strength := rand.Intn(strengthMax-strengthMin) + strengthMin
+			neu.axons = append(neu.axons, axon{strength: strength, neuron: neurons[ix]})
 		}
 	}
 }
