@@ -28,6 +28,8 @@ func TestSetupNeurons_ShouldAssignDownstreamToAllNeurons(t *testing.T) {
 	} else {
 		fmt.Printf("Total neurons with missing downstream: %v\n", count)
 	}
+
+	KillNetwork(neurons)
 }
 
 func TestMinAndMaxThreshold_ShouldHaveNoNeuronsWithThresholdOutsideMinAndMax(t *testing.T) {
@@ -42,6 +44,7 @@ func TestMinAndMaxThreshold_ShouldHaveNoNeuronsWithThresholdOutsideMinAndMax(t *
 	}
 
 	fmt.Printf("Average threshold of neurons: %v\n", averageOfSlice(thresholds))
+	KillNetwork(neurons)
 }
 
 func TestMinAndMaxStrength_ShouldHaveNoNeuronsWithStrengthOutsideMinAndMax(t *testing.T) {
@@ -60,6 +63,7 @@ func TestMinAndMaxStrength_ShouldHaveNoNeuronsWithStrengthOutsideMinAndMax(t *te
 	}
 
 	fmt.Printf("Average strength of axons: %v\n", averageOfSlice(strengths))
+	KillNetwork(neurons)
 }
 
 func averageOfSlice(slice []int) int {

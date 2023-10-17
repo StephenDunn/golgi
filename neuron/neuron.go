@@ -7,10 +7,13 @@ import (
 )
 
 type Neuron struct {
-	id        uuid.UUID
-	threshold int
-	HasFired  bool
-	axons     []axon
+	id                uuid.UUID
+	threshold         int
+	HasFired          bool
+	axons             []axon
+	receptor          chan int
+	synapticThreshold int
+	die               chan struct{}
 }
 
 type axon struct {
@@ -18,9 +21,34 @@ type axon struct {
 	strength int
 }
 
+func (n Neuron) listen() {
+	for {
+		select {
+		case val := <-n.receptor:
+			n.synapticThreshold += val
+			if n.synapticThreshold >= n.threshold {
+				for _, axon := range n.axons {
+					axon.neuron.receptor <- axon.strength
+				}
+
+				break
+			}
+		case <-n.die:
+			return
+		}
+	}
+}
+
+func (n Neuron) kill() {
+	close(n.die)
+}
+
 func NewNeuron(thresholdMin int, thresholdMax int) *Neuron {
 	threshold := rand.Intn(thresholdMax-thresholdMin) + thresholdMin
-	neu := Neuron{threshold: threshold, id: uuid.New()}
+	neu := Neuron{threshold: threshold, id: uuid.New(), receptor: make(chan int), die: make(chan struct{})}
+
+	go neu.listen()
+
 	return &neu
 }
 
@@ -49,5 +77,11 @@ func SetUpNetwork(neurons []*Neuron, strengthMin int, strengthMax int) {
 			strength := rand.Intn(strengthMax-strengthMin) + strengthMin
 			neu.axons = append(neu.axons, axon{strength: strength, neuron: neurons[ix]})
 		}
+	}
+}
+
+func KillNetwork(neurons []*Neuron) {
+	for _, neu := range neurons {
+		neu.kill()
 	}
 }
