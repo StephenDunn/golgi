@@ -2,16 +2,19 @@ package neuron
 
 import (
 	"math/rand"
+
+	"github.com/google/uuid"
 )
 
 type Neuron struct {
+	id                uuid.UUID
 	threshold         int
 	HasFired          bool
 	downstreamNeurons []*Neuron
 }
 
 func NewNeuron(threshold int) *Neuron {
-	neu := Neuron{threshold: threshold}
+	neu := Neuron{threshold: threshold, id: uuid.New()}
 	return &neu
 }
 
