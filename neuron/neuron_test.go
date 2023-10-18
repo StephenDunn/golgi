@@ -3,6 +3,9 @@ package neuron
 import (
 	"fmt"
 	"testing"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 var totalNeurons = 10000
@@ -63,6 +66,31 @@ func TestMinAndMaxStrength_ShouldHaveNoNeuronsWithStrengthOutsideMinAndMax(t *te
 	}
 
 	fmt.Printf("Average strength of axons: %v\n", averageOfSlice(strengths))
+	KillNetwork(neurons)
+}
+
+func TestNeuronFiring_WhenOneNeuronFiresAnotherShouldFire(t *testing.T) {
+	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax)
+	SetUpNetwork(neurons, strengthMin, strengthMax)
+
+	for i := 0; i < 100; i++ {
+		neurons[i].receptor <- 1000
+	}
+
+	time.Sleep(1 * time.Second)
+
+	triggeredNeurons := []uuid.UUID{}
+	for _, neu := range neurons {
+		if neu.HasFired {
+			triggeredNeurons = append(triggeredNeurons, neu.id)
+		}
+	}
+
+	if len(triggeredNeurons) == 0 {
+		t.Fatalf("No neurons fired\n")
+	} else {
+		fmt.Printf("Neurons fired: %v\n", len(triggeredNeurons))
+	}
 	KillNetwork(neurons)
 }
 

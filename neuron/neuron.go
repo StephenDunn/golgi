@@ -2,6 +2,7 @@ package neuron
 
 import (
 	"math/rand"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -14,6 +15,7 @@ type Neuron struct {
 	receptor          chan int
 	synapticThreshold int
 	die               chan struct{}
+	ticker            *time.Ticker
 }
 
 type axon struct {
@@ -21,31 +23,39 @@ type axon struct {
 	strength int
 }
 
-func (n Neuron) listen() {
+func (n *Neuron) listen() {
 	for {
 		select {
 		case val := <-n.receptor:
-			n.synapticThreshold += val
-			if n.synapticThreshold >= n.threshold {
-				for _, axon := range n.axons {
-					axon.neuron.receptor <- axon.strength
+			if !n.HasFired {
+				n.HasFired = true
+				n.synapticThreshold += val
+				if n.synapticThreshold >= n.threshold {
+					for _, axon := range n.axons {
+						axon.neuron.receptor <- axon.strength
+					}
 				}
-
-				break
 			}
+		case <-n.ticker.C:
+			if n.synapticThreshold > 0 {
+				n.synapticThreshold -= 1
+			} else if n.synapticThreshold <= 0 {
+				n.HasFired = false
+			}
+
 		case <-n.die:
 			return
 		}
 	}
 }
 
-func (n Neuron) kill() {
+func (n *Neuron) kill() {
 	close(n.die)
 }
 
 func NewNeuron(thresholdMin int, thresholdMax int) *Neuron {
 	threshold := rand.Intn(thresholdMax-thresholdMin) + thresholdMin
-	neu := Neuron{threshold: threshold, id: uuid.New(), receptor: make(chan int), die: make(chan struct{})}
+	neu := Neuron{threshold: threshold, id: uuid.New(), receptor: make(chan int), die: make(chan struct{}), ticker: time.NewTicker(1 * time.Second)}
 
 	go neu.listen()
 
