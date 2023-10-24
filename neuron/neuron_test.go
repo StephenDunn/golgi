@@ -8,14 +8,15 @@ import (
 	"github.com/google/uuid"
 )
 
-var totalNeurons = 10000
+var totalNeurons = 100000
 var thresholdMin = 10
 var thresholdMax = 100
 var strengthMin = 1
-var strengthMax = 50
+var strengthMax = 5
+var refactory = 0.25
 
 func TestSetupNeurons_ShouldAssignDownstreamToAllNeurons(t *testing.T) {
-	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax)
+	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax, refactory)
 	SetUpNetwork(neurons, strengthMin, strengthMax)
 
 	count := 0
@@ -36,7 +37,7 @@ func TestSetupNeurons_ShouldAssignDownstreamToAllNeurons(t *testing.T) {
 }
 
 func TestMinAndMaxThreshold_ShouldHaveNoNeuronsWithThresholdOutsideMinAndMax(t *testing.T) {
-	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax)
+	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax, refactory)
 	thresholds := []int{}
 
 	for _, neu := range neurons {
@@ -51,7 +52,7 @@ func TestMinAndMaxThreshold_ShouldHaveNoNeuronsWithThresholdOutsideMinAndMax(t *
 }
 
 func TestMinAndMaxStrength_ShouldHaveNoNeuronsWithStrengthOutsideMinAndMax(t *testing.T) {
-	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax)
+	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax, refactory)
 	SetUpNetwork(neurons, strengthMin, strengthMax)
 	strengths := []int{}
 
@@ -70,14 +71,14 @@ func TestMinAndMaxStrength_ShouldHaveNoNeuronsWithStrengthOutsideMinAndMax(t *te
 }
 
 func TestNeuronFiring_WhenOneNeuronFiresAnotherShouldFire(t *testing.T) {
-	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax)
+	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax, refactory)
 	SetUpNetwork(neurons, strengthMin, strengthMax)
 
 	for i := 0; i < 100; i++ {
 		neurons[i].receptor <- 1000
 	}
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(50 * time.Millisecond)
 
 	triggeredNeurons := []uuid.UUID{}
 	for _, neu := range neurons {
@@ -92,6 +93,56 @@ func TestNeuronFiring_WhenOneNeuronFiresAnotherShouldFire(t *testing.T) {
 		fmt.Printf("Neurons fired: %v\n", len(triggeredNeurons))
 	}
 	KillNetwork(neurons)
+}
+
+func TestNeuronTicker_RecievesTickSynapticThresholdUpdated(t *testing.T) {
+	neuron := NewNeuron(thresholdMin, thresholdMax, refactory)
+	impulse := 40
+
+	neuron.recieveSynapticImpulse(impulse)
+	neuron.recieveTicker()
+
+	if neuron.synapticThreshold != 10 {
+		t.Fatalf("Synaptic threshold decay incorrect\n")
+	} else {
+		fmt.Printf("Impulse applied: %v. 1 decay applied at: %v. Synaptic threshold: %v. Correct decay applied. \n", impulse, refactory, neuron.synapticThreshold)
+	}
+}
+
+func TestNeuronTicker_RecievesTickSynapticHitsZero(t *testing.T) {
+	neuron := NewNeuron(thresholdMin, thresholdMax, refactory)
+	impulse := 10
+
+	neuron.recieveSynapticImpulse(impulse)
+	neuron.recieveTicker()
+	neuron.recieveTicker()
+
+	if neuron.synapticThreshold != 0 {
+		t.Fatalf("Synaptic threshold does not reach zero\n")
+	} else {
+		fmt.Printf("Impulse applied: %v. 2 decays applied at: %v. Synaptic threshold: %v. Correct decay applied. \n", impulse, refactory, neuron.synapticThreshold)
+	}
+}
+
+func TestNeuronSynapse_RecievesSynapticTrigger_SynapitcThresholdIncreased(t *testing.T) {
+	neuron := NewNeuron(thresholdMin, thresholdMax, refactory)
+	impulse := 4
+
+	neuron.recieveSynapticImpulse(impulse)
+
+	if neuron.synapticThreshold != impulse {
+		t.Fatalf("Synaptic threshold: %v does not equal impulse: %v\n", neuron.synapticThreshold, impulse)
+	} else {
+		fmt.Printf("Synaptic threshold correctly incrimented by impulse: %v. Symaptic threshold: %v. ", impulse, neuron.synapticThreshold)
+	}
+
+	neuron.recieveSynapticImpulse(impulse)
+
+	if neuron.synapticThreshold != impulse*2 {
+		t.Fatalf("Synaptic threshold: %v does not equal impulse: %v\n", neuron.synapticThreshold, impulse*2)
+	} else {
+		fmt.Printf("Synaptic threshold correctly incrimented by impulse: %v. Symaptic threshold: %v", impulse, neuron.synapticThreshold)
+	}
 }
 
 func averageOfSlice(slice []int) int {

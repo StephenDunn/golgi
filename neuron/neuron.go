@@ -1,6 +1,7 @@
 package neuron
 
 import (
+	"math"
 	"math/rand"
 	"time"
 
@@ -16,6 +17,7 @@ type Neuron struct {
 	synapticThreshold int
 	die               chan struct{}
 	ticker            *time.Ticker
+	refactory         float64
 }
 
 type axon struct {
@@ -27,25 +29,32 @@ func (n *Neuron) listen() {
 	for {
 		select {
 		case val := <-n.receptor:
-			if !n.HasFired {
-				n.HasFired = true
-				n.synapticThreshold += val
-				if n.synapticThreshold >= n.threshold {
-					for _, axon := range n.axons {
-						axon.neuron.receptor <- axon.strength
-					}
-				}
-			}
+			n.recieveSynapticImpulse(val)
 		case <-n.ticker.C:
-			if n.synapticThreshold > 0 {
-				n.synapticThreshold -= 1
-			} else if n.synapticThreshold <= 0 {
-				n.HasFired = false
-			}
-
+			n.recieveTicker()
 		case <-n.die:
 			return
 		}
+	}
+}
+
+func (n *Neuron) recieveSynapticImpulse(val int) {
+	if !n.HasFired {
+		n.synapticThreshold += val
+		if n.synapticThreshold >= n.threshold {
+			n.HasFired = true
+			for _, axon := range n.axons {
+				axon.neuron.receptor <- axon.strength
+			}
+		}
+	}
+}
+
+func (n *Neuron) recieveTicker() {
+	if n.synapticThreshold > 0 {
+		n.synapticThreshold = int(math.Floor(float64(n.synapticThreshold) * n.refactory))
+	} else if n.synapticThreshold <= 0 {
+		n.HasFired = false
 	}
 }
 
@@ -53,19 +62,19 @@ func (n *Neuron) kill() {
 	close(n.die)
 }
 
-func NewNeuron(thresholdMin int, thresholdMax int) *Neuron {
+func NewNeuron(thresholdMin int, thresholdMax int, refactory float64) *Neuron {
 	threshold := rand.Intn(thresholdMax-thresholdMin) + thresholdMin
-	neu := Neuron{threshold: threshold, id: uuid.New(), receptor: make(chan int), die: make(chan struct{}), ticker: time.NewTicker(1 * time.Second)}
+	neu := Neuron{threshold: threshold, id: uuid.New(), receptor: make(chan int), die: make(chan struct{}), ticker: time.NewTicker(1 * time.Second), refactory: refactory}
 
 	go neu.listen()
 
 	return &neu
 }
 
-func NewNeurons(amount int, thresholdMin int, thresholdMax int) []*Neuron {
+func NewNeurons(amount int, thresholdMin int, thresholdMax int, refactory float64) []*Neuron {
 	var neurons []*Neuron
 	for i := 0; i < amount; i++ {
-		neurons = append(neurons, NewNeuron(thresholdMin, thresholdMax))
+		neurons = append(neurons, NewNeuron(thresholdMin, thresholdMax, refactory))
 	}
 
 	return neurons
