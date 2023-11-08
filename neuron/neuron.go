@@ -62,19 +62,35 @@ func (n *Neuron) kill() {
 	close(n.die)
 }
 
-func NewNeuron(thresholdMin int, thresholdMax int, refactory float64) *Neuron {
-	threshold := rand.Intn(thresholdMax-thresholdMin) + thresholdMin
-	neu := Neuron{threshold: threshold, id: uuid.New(), receptor: make(chan int), die: make(chan struct{}), ticker: time.NewTicker(1 * time.Second), refactory: refactory}
+type optFunc func(*Neuron)
 
-	go neu.listen()
-
-	return &neu
+func WithThreshold(thresholdMin int, thresholdMax int) optFunc {
+	return func(n *Neuron) {
+		n.threshold = rand.Intn(thresholdMax-thresholdMin) + thresholdMin
+	}
 }
 
-func NewNeurons(amount int, thresholdMin int, thresholdMax int, refactory float64) []*Neuron {
+func WithRefactory(refactory float64) optFunc {
+	return func(n *Neuron) {
+		n.refactory = refactory
+	}
+}
+
+func NewNeuron(opts ...optFunc) *Neuron {
+	neuron := Neuron{threshold: 0, id: uuid.New(), receptor: make(chan int), die: make(chan struct{}), ticker: time.NewTicker(1 * time.Second), refactory: 0}
+	for _, fn := range opts {
+		fn(&neuron)
+	}
+
+	go neuron.listen()
+
+	return &neuron
+}
+
+func NewNeurons(amount int, opts ...optFunc) []*Neuron {
 	var neurons []*Neuron
 	for i := 0; i < amount; i++ {
-		neurons = append(neurons, NewNeuron(thresholdMin, thresholdMax, refactory))
+		neurons = append(neurons, NewNeuron(opts...))
 	}
 
 	return neurons

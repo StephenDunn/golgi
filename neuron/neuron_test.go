@@ -16,7 +16,7 @@ var strengthMax = 5
 var refactory = 0.25
 
 func TestSetupNeurons_ShouldAssignDownstreamToAllNeurons(t *testing.T) {
-	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax, refactory)
+	neurons := NewNeurons(totalNeurons, WithThreshold(thresholdMin, thresholdMax), WithRefactory(refactory))
 	SetUpNetwork(neurons, strengthMin, strengthMax)
 
 	count := 0
@@ -37,7 +37,7 @@ func TestSetupNeurons_ShouldAssignDownstreamToAllNeurons(t *testing.T) {
 }
 
 func TestMinAndMaxThreshold_ShouldHaveNoNeuronsWithThresholdOutsideMinAndMax(t *testing.T) {
-	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax, refactory)
+	neurons := NewNeurons(totalNeurons, WithThreshold(thresholdMin, thresholdMax), WithRefactory(refactory))
 	thresholds := []int{}
 
 	for _, neu := range neurons {
@@ -52,7 +52,7 @@ func TestMinAndMaxThreshold_ShouldHaveNoNeuronsWithThresholdOutsideMinAndMax(t *
 }
 
 func TestMinAndMaxStrength_ShouldHaveNoNeuronsWithStrengthOutsideMinAndMax(t *testing.T) {
-	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax, refactory)
+	neurons := NewNeurons(totalNeurons, WithThreshold(thresholdMin, thresholdMax), WithRefactory(refactory))
 	SetUpNetwork(neurons, strengthMin, strengthMax)
 	strengths := []int{}
 
@@ -71,7 +71,7 @@ func TestMinAndMaxStrength_ShouldHaveNoNeuronsWithStrengthOutsideMinAndMax(t *te
 }
 
 func TestNeuronFiring_WhenOneNeuronFiresAnotherShouldFire(t *testing.T) {
-	neurons := NewNeurons(totalNeurons, thresholdMin, thresholdMax, refactory)
+	neurons := NewNeurons(totalNeurons, WithThreshold(thresholdMin, thresholdMax), WithRefactory(refactory))
 	SetUpNetwork(neurons, strengthMin, strengthMax)
 
 	for i := 0; i < 100; i++ {
@@ -96,7 +96,7 @@ func TestNeuronFiring_WhenOneNeuronFiresAnotherShouldFire(t *testing.T) {
 }
 
 func TestNeuronTicker_RecievesTickSynapticThresholdUpdated(t *testing.T) {
-	neuron := NewNeuron(thresholdMin, thresholdMax, refactory)
+	neuron := NewNeuron(WithThreshold(thresholdMin, thresholdMax), WithRefactory(refactory))
 	impulse := 40
 
 	neuron.recieveSynapticImpulse(impulse)
@@ -110,7 +110,7 @@ func TestNeuronTicker_RecievesTickSynapticThresholdUpdated(t *testing.T) {
 }
 
 func TestNeuronTicker_RecievesTickSynapticHitsZero(t *testing.T) {
-	neuron := NewNeuron(thresholdMin, thresholdMax, refactory)
+	neuron := NewNeuron(WithThreshold(thresholdMin, thresholdMax), WithRefactory(refactory))
 	impulse := 10
 
 	neuron.recieveSynapticImpulse(impulse)
@@ -125,7 +125,7 @@ func TestNeuronTicker_RecievesTickSynapticHitsZero(t *testing.T) {
 }
 
 func TestNeuronSynapse_RecievesSynapticTrigger_SynapitcThresholdIncreased(t *testing.T) {
-	neuron := NewNeuron(thresholdMin, thresholdMax, refactory)
+	neuron := NewNeuron(WithThreshold(thresholdMin, thresholdMax), WithRefactory(refactory))
 	impulse := 4
 
 	neuron.recieveSynapticImpulse(impulse)
@@ -141,7 +141,7 @@ func TestNeuronSynapse_RecievesSynapticTrigger_SynapitcThresholdIncreased(t *tes
 	if neuron.synapticThreshold != impulse*2 {
 		t.Fatalf("Synaptic threshold: %v does not equal impulse: %v\n", neuron.synapticThreshold, impulse*2)
 	} else {
-		fmt.Printf("Synaptic threshold correctly incrimented by impulse: %v. Symaptic threshold: %v", impulse, neuron.synapticThreshold)
+		fmt.Printf("Synaptic threshold correctly incrimented by impulse: %v. Symaptic threshold: %v\n", impulse, neuron.synapticThreshold)
 	}
 }
 
