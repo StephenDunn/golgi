@@ -76,7 +76,7 @@ func WithRefactory(refactory float64) optFunc {
 	}
 }
 
-func NewNeuron(opts ...optFunc) *Neuron {
+func New(opts ...optFunc) *Neuron {
 	neuron := Neuron{threshold: 0, id: uuid.New(), receptor: make(chan int), die: make(chan struct{}), ticker: time.NewTicker(1 * time.Second), refactory: 0}
 	for _, fn := range opts {
 		fn(&neuron)
@@ -87,10 +87,10 @@ func NewNeuron(opts ...optFunc) *Neuron {
 	return &neuron
 }
 
-func NewNeurons(amount int, opts ...optFunc) []*Neuron {
+func NewNetwork(amount int, opts ...optFunc) []*Neuron {
 	var neurons []*Neuron
 	for i := 0; i < amount; i++ {
-		neurons = append(neurons, NewNeuron(opts...))
+		neurons = append(neurons, New(opts...))
 	}
 
 	return neurons
