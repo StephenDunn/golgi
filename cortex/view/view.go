@@ -12,7 +12,7 @@ var Index = `<!DOCTYPE html>
 	<p>My first paragraph.</p>
 
 	<div hx-trigger="click"
-    hx-post="/dothing/whatwhat"
+    hx-get="/dothing/whatwhat"
     hx-swap="outerHTML"
     class="count">Click here</div>
 

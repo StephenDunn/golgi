@@ -29,19 +29,23 @@ func Startup() {
 
 	e.GET("/yahoo", hello)
 
-	e.GET("/dothing/:id", func(c echo.Context) error {
-		id := string(c.Param("id"))
-
-		output := id + id
-
-		return c.Render(http.StatusOK, "item-count", output)
-	})
+	e.GET("/dothing/:id", doThing)
 
 	e.Logger.Fatal(e.Start(":8091"))
 }
 
 func hello(c echo.Context) error {
+	fmt.Println("Starting yahoo")
 	return c.Render(http.StatusOK, "index", view.Index)
+}
+
+func doThing(c echo.Context) error {
+	id := string(c.Param("id"))
+
+	fmt.Println(id)
+	output := id + id
+
+	return c.String(http.StatusOK, output)
 }
 
 func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
