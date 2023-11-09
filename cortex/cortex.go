@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"golgi/cortex/css"
-	javaScript "golgi/cortex/js"
+	"golgi/cortex/js"
 	"golgi/cortex/view"
-	"html/template"
-	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,22 +14,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type TemplateRenderer struct {
-	templates *template.Template
-}
-
 func Startup() {
 	e := echo.New()
-	tmpl := template.New("index")
-
-	var err error
-	if tmpl, err = tmpl.Parse(view.Shared); err != nil {
-		fmt.Println(err)
-	}
-
-	e.Renderer = &TemplateRenderer{
-		templates: tmpl,
-	}
 
 	e.GET("/", index)
 	e.GET("/main", main)
@@ -76,7 +60,7 @@ func cssLayout(c echo.Context) error {
 }
 
 func jsUi(c echo.Context) error {
-	return c.String(http.StatusOK, javaScript.Ui)
+	return c.String(http.StatusOK, js.Ui)
 }
 
 func doThing(c echo.Context) error {
@@ -86,8 +70,4 @@ func doThing(c echo.Context) error {
 	output := id + id
 
 	return c.String(http.StatusOK, output)
-}
-
-func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.templates.ExecuteTemplate(w, name, data)
 }
